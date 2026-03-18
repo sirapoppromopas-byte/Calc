@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Calculator</title>
+    <title>Trading Calculator - SL/Entry</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
         
@@ -60,6 +60,7 @@
         }
         .highlight-green { border-color: #22c55e; }
         .highlight-yellow { border-color: #fbbf24; }
+        .highlight-blue { border-color: #38bdf8; } /* สีใหม่สำหรับ Profit */
         .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 5px; }
         .result-value { font-size: 1.2rem; font-weight: bold; }
     </style>
@@ -92,12 +93,16 @@
 
     <div class="result-container">
         <div class="result-box highlight-green">
-            <div class="result-label">Result Value</div>
+            <div class="result-label">Position Size</div>
             <div id="pos-size" class="result-value">0.00</div>
         </div>
         <div class="result-box highlight-yellow">
             <div class="result-label">RR Ratio</div>
             <div id="rr-ratio" class="result-value">0.00 : 1</div>
+        </div>
+        <div class="result-box highlight-blue full-width">
+            <div class="result-label">Estimated Profit (USDT)</div>
+            <div id="profit" class="result-value" style="color: #38bdf8;">0.00</div>
         </div>
     </div>
 </div>
@@ -111,39 +116,43 @@
 
         const posDisplay = document.getElementById('pos-size');
         const rrDisplay = document.getElementById('rr-ratio');
+        const profitDisplay = document.getElementById('profit');
 
-        // 1. คำนวณตามสูตร: USDT / (1 - (SL / Entry))
-        if (usdt && entry && sl) {
-            const innerBracket = sl / entry;
-            const denominator = 1 - innerBracket;
-
-            if (denominator !== 0) {
-                const total = usdt / denominator;
-                // ใช้ toFixed(2) และใส่คอมม่าเพื่อให้ดูง่าย
-                posDisplay.innerText = total.toLocaleString(undefined, {
-                    minimumFractionDigits: 2, 
-                    maximumFractionDigits: 2
-                });
-            } else {
-                posDisplay.innerText = "Error";
-            }
+        // 1. คำนวณ Position Size
+        if (usdt && entry && sl && entry !== sl) {
+            const riskPerUnit = Math.abs(entry - sl);
+            const totalUnits = usdt / riskPerUnit;
+            const totalValue = totalUnits * entry; // มูลค่า Position (Size)
+            
+            posDisplay.innerText = totalValue.toLocaleString(undefined, {
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2
+            });
         } else {
             posDisplay.innerText = "0.00";
         }
 
-        // 2. คำนวณ RR Ratio (ระยะกำไร / ระยะขาดทุน)
-        if (entry && sl && tp) {
+        // 2. คำนวณ RR Ratio และ Profit
+        if (entry && sl && tp && entry !== sl) {
             const risk = Math.abs(entry - sl);
             const reward = Math.abs(tp - entry);
+            const rr = reward / risk;
             
-            if (risk !== 0) {
-                const rr = reward / risk;
-                rrDisplay.innerText = rr.toFixed(2) + " : 1";
+            rrDisplay.innerText = rr.toFixed(2) + " : 1";
+
+            // คำนวณกำไร: (RR * Risk Amount)
+            if (usdt) {
+                const estimatedProfit = rr * usdt;
+                profitDisplay.innerText = "+" + estimatedProfit.toLocaleString(undefined, {
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2
+                });
             } else {
-                rrDisplay.innerText = "0.00 : 1";
+                profitDisplay.innerText = "0.00";
             }
         } else {
             rrDisplay.innerText = "0.00 : 1";
+            profitDisplay.innerText = "0.00";
         }
     }
 </script>
