@@ -60,9 +60,29 @@
         }
         .highlight-green { border-color: #22c55e; }
         .highlight-yellow { border-color: #fbbf24; }
-        .highlight-blue { border-color: #38bdf8; } /* สีใหม่สำหรับ Profit */
+        .highlight-blue { border-color: #38bdf8; }
         .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 5px; }
         .result-value { font-size: 1.2rem; font-weight: bold; }
+
+        /* สไตล์ปุ่ม Clear */
+        .clear-btn {
+            width: 100%;
+            margin-top: 20px;
+            padding: 12px;
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        .clear-btn:hover {
+            background-color: #ef4444;
+            color: white;
+            border-color: #ef4444;
+        }
     </style>
 </head>
 <body>
@@ -72,12 +92,13 @@
     
     <div class="input-group full-width">
         <label>USDT (Risk Amount)</label>
+        <label>(จำนวนขาดทุนUSDTที่รับได้)</label>
         <input type="number" id="usdt" placeholder="0.00" oninput="calculate()">
     </div>
 
     <div class="input-grid">
         <div class="input-group">
-            <label>Entry Price</label>
+            <label>Entry Price (ราคาเข้าซื้อ)</label>
             <input type="number" id="entry" placeholder="0.00" oninput="calculate()">
         </div>
         <div class="input-group">
@@ -94,6 +115,7 @@
     <div class="result-container">
         <div class="result-box highlight-green">
             <div class="result-label">Position Size</div>
+            <div class="result-label">(จำนวนเงินต้น (USDT))</div>
             <div id="pos-size" class="result-value">0.00</div>
         </div>
         <div class="result-box highlight-yellow">
@@ -102,9 +124,12 @@
         </div>
         <div class="result-box highlight-blue full-width">
             <div class="result-label">Estimated Profit (USDT)</div>
+            <div class="result-label">กำไร (USDT)</div>
             <div id="profit" class="result-value" style="color: #38bdf8;">0.00</div>
         </div>
     </div>
+
+    <button class="clear-btn" onclick="clearAll()">Clear All</button>
 </div>
 
 <script>
@@ -118,11 +143,11 @@
         const rrDisplay = document.getElementById('rr-ratio');
         const profitDisplay = document.getElementById('profit');
 
-        // 1. คำนวณ Position Size
+        // คำนวณ Position Size
         if (usdt && entry && sl && entry !== sl) {
             const riskPerUnit = Math.abs(entry - sl);
             const totalUnits = usdt / riskPerUnit;
-            const totalValue = totalUnits * entry; // มูลค่า Position (Size)
+            const totalValue = totalUnits * entry;
             
             posDisplay.innerText = totalValue.toLocaleString(undefined, {
                 minimumFractionDigits: 2, 
@@ -132,7 +157,7 @@
             posDisplay.innerText = "0.00";
         }
 
-        // 2. คำนวณ RR Ratio และ Profit
+        // คำนวณ RR Ratio และ Profit
         if (entry && sl && tp && entry !== sl) {
             const risk = Math.abs(entry - sl);
             const reward = Math.abs(tp - entry);
@@ -140,7 +165,6 @@
             
             rrDisplay.innerText = rr.toFixed(2) + " : 1";
 
-            // คำนวณกำไร: (RR * Risk Amount)
             if (usdt) {
                 const estimatedProfit = rr * usdt;
                 profitDisplay.innerText = "+" + estimatedProfit.toLocaleString(undefined, {
@@ -154,6 +178,20 @@
             rrDisplay.innerText = "0.00 : 1";
             profitDisplay.innerText = "0.00";
         }
+    }
+
+    // ฟังก์ชันล้างค่า
+    function clearAll() {
+        // ล้างค่าใน input
+        document.getElementById('usdt').value = '';
+        document.getElementById('entry').value = '';
+        document.getElementById('sl').value = '';
+        document.getElementById('tp').value = '';
+        
+        // รีเซ็ตการแสดงผล
+        document.getElementById('pos-size').innerText = "0.00";
+        document.getElementById('rr-ratio').innerText = "0.00 : 1";
+        document.getElementById('profit').innerText = "0.00";
     }
 </script>
 
