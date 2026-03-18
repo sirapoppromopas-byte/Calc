@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Calculator</title>
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #121212; /* เปลี่ยนเป็น Dark Mode ให้ดูเท่แบบเทรดเดอร์ */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+        }
+        .card {
+            background: #1e1e1e;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 350px;
+            border: 1px solid #333;
+        }
+        h2 { text-align: center; color: #00ff88; margin-bottom: 25px; font-weight: 500; }
+        .input-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #aaa; }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+            background: #2d2d2d;
+            color: #fff;
+            outline: none;
+        }
+        input:focus { border-color: #00ff88; }
+        .result-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #252525;
+            border-radius: 12px;
+            border: 1px solid #00ff88;
+            text-align: center;
+        }
+        .result-label { color: #00ff88; font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8; }
+        #result {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>Trading Calc</h2>
+    
+    <div class="input-group">
+        <label>USDT (Margin/Risk)</label>
+        <input type="number" id="usdt" placeholder="0.00" oninput="calculate()">
+    </div>
+
+    <div class="input-group">
+        <label>Entry (ราคาเข้า)</label>
+        <input type="number" id="entry" placeholder="0.00" oninput="calculate()">
+    </div>
+
+    <div class="input-group">
+        <label>SL (Stop Loss)</label>
+        <input type="number" id="sl" placeholder="0.00" oninput="calculate()">
+    </div>
+
+    <div class="result-box">
+        <div class="result-label">ผลลัพธ์ (Position Size)</div>
+        <div id="result">0.00</div>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        const usdt = parseFloat(document.getElementById('usdt').value);
+        const entry = parseFloat(document.getElementById('entry').value);
+        const sl = parseFloat(document.getElementById('sl').value);
+        const display = document.getElementById('result');
+
+        // ตรวจสอบความถูกต้องของข้อมูล
+        if (!usdt || !entry || !sl) {
+            display.innerText = "0.00";
+            return;
+        }
+
+        // สูตรใหม่: USDT / (1 - (Entry / SL))
+        try {
+            const innerBracket = sl / entry;
+            const denominator = 1 - innerBracket;
+
+            if (denominator === 0) {
+                display.innerText = "หารด้วย 0";
+                return;
+            }
+
+            const total = usdt / denominator;
+
+            // แสดงผลลัพธ์
+            display.innerText = total.toLocaleString(undefined, {
+                minimumFractionDigits: 2, 
+                maximumFractionDigits: 2
+            });
+        } catch (e) {
+            display.innerText = "Error";
+        }
+    }
+</script>
+
+</body>
+</html>
