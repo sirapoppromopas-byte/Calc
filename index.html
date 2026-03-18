@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Trading Calculator</title>
+    <title>Trading Calculator - SL/Entry</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
         
@@ -26,7 +26,7 @@
             max-width: 400px;
             border: 1px solid #334155;
         }
-        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; font-weight: 500; }
+        h2 { text-align: center; color: #fbbf24; margin-bottom: 20px; font-weight: 500; }
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         .input-group { margin-bottom: 15px; }
@@ -43,7 +43,7 @@
             outline: none;
             transition: all 0.2s;
         }
-        input:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        input:focus { border-color: #fbbf24; box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.2); }
         
         .result-container {
             margin-top: 20px;
@@ -59,7 +59,7 @@
             text-align: center;
         }
         .highlight-green { border-color: #22c55e; }
-        .highlight-blue { border-color: #38bdf8; }
+        .highlight-yellow { border-color: #fbbf24; }
         .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 5px; }
         .result-value { font-size: 1.2rem; font-weight: bold; }
     </style>
@@ -67,7 +67,7 @@
 <body>
 
 <div class="card">
-    <h2>Trading Tool</h2>
+    <h2>Trading Calc </h2>
     
     <div class="input-group full-width">
         <label>USDT (Risk Amount)</label>
@@ -86,17 +86,17 @@
     </div>
 
     <div class="input-group full-width">
-        <label>Take Profit (TP) - <small>Optional</small></label>
-        <input type="number" id="tp" placeholder="ใส่เพื่อคำนวณ RR" oninput="calculate()">
+        <label>Take Profit (TP) - Optional</label>
+        <input type="number" id="tp" placeholder="0.00" oninput="calculate()">
     </div>
 
     <div class="result-container">
         <div class="result-box highlight-green">
-            <div class="result-label">Position Size</div>
+            <div class="result-label">Result Value</div>
             <div id="pos-size" class="result-value">0.00</div>
         </div>
-        <div class="result-box highlight-blue">
-            <div class="result-label">R:R Ratio</div>
+        <div class="result-box highlight-yellow">
+            <div class="result-label">RR Ratio</div>
             <div id="rr-ratio" class="result-value">0.00 : 1</div>
         </div>
     </div>
@@ -112,12 +112,15 @@
         const posDisplay = document.getElementById('pos-size');
         const rrDisplay = document.getElementById('rr-ratio');
 
-        // 1. คำนวณ Position Size (สูตรเดิมของคุณ)
-        if (usdt && entry && sl && sl !== 0) {
-            const denominator = 1 - (entry / sl);
+        // 1. คำนวณตามสูตร: USDT / (1 - (SL / Entry))
+        if (usdt && entry && sl) {
+            const innerBracket = sl / entry;
+            const denominator = 1 - innerBracket;
+
             if (denominator !== 0) {
                 const total = usdt / denominator;
-                posDisplay.innerText = Math.abs(total).toLocaleString(undefined, {
+                // ใช้ toFixed(2) และใส่คอมม่าเพื่อให้ดูง่าย
+                posDisplay.innerText = total.toLocaleString(undefined, {
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2
                 });
@@ -128,14 +131,13 @@
             posDisplay.innerText = "0.00";
         }
 
-        // 2. คำนวณ R:R Ratio (ถ้ามีการกรอก TP)
-        // สูตร RR = ระยะกำไร (TP-Entry) / ระยะขาดทุน (Entry-SL)
+        // 2. คำนวณ RR Ratio (ระยะกำไร / ระยะขาดทุน)
         if (entry && sl && tp) {
-            const profitDist = Math.abs(tp - entry);
-            const lossDist = Math.abs(entry - sl);
+            const risk = Math.abs(entry - sl);
+            const reward = Math.abs(tp - entry);
             
-            if (lossDist !== 0) {
-                const rr = profitDist / lossDist;
+            if (risk !== 0) {
+                const rr = reward / risk;
                 rrDisplay.innerText = rr.toFixed(2) + " : 1";
             } else {
                 rrDisplay.innerText = "0.00 : 1";
