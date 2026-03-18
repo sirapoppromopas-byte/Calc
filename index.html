@@ -3,81 +3,102 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Calculator</title>
+    <title>Crypto Trading Calculator</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
+        
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #121212; /* เปลี่ยนเป็น Dark Mode ให้ดูเท่แบบเทรดเดอร์ */
+            background-color: #0f172a;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            color: white;
+            color: #f8fafc;
         }
         .card {
-            background: #1e1e1e;
+            background: #1e293b;
             padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 350px;
-            border: 1px solid #333;
+            max-width: 400px;
+            border: 1px solid #334155;
         }
-        h2 { text-align: center; color: #00ff88; margin-bottom: 25px; font-weight: 500; }
-        .input-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: #aaa; }
+        h2 { text-align: center; color: #38bdf8; margin-bottom: 20px; font-weight: 500; }
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .full-width { grid-column: span 2; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-size: 0.8rem; color: #94a3b8; }
         input {
             width: 100%;
             padding: 12px;
-            border: 1px solid #444;
-            border-radius: 8px;
+            border: 1px solid #334155;
+            border-radius: 10px;
             box-sizing: border-box;
             font-size: 16px;
-            background: #2d2d2d;
+            background: #0f172a;
             color: #fff;
             outline: none;
+            transition: all 0.2s;
         }
-        input:focus { border-color: #00ff88; }
+        input:focus { border-color: #38bdf8; box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        
+        .result-container {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
         .result-box {
-            margin-top: 25px;
-            padding: 20px;
-            background-color: #252525;
+            padding: 15px;
+            background-color: #0f172a;
             border-radius: 12px;
-            border: 1px solid #00ff88;
+            border: 1px solid #334155;
             text-align: center;
         }
-        .result-label { color: #00ff88; font-size: 0.9rem; margin-bottom: 10px; opacity: 0.8; }
-        #result {
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: #fff;
-        }
+        .highlight-green { border-color: #22c55e; }
+        .highlight-blue { border-color: #38bdf8; }
+        .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 5px; }
+        .result-value { font-size: 1.2rem; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Trading Calc</h2>
+    <h2>Trading Tool</h2>
     
-    <div class="input-group">
-        <label>USDT (Margin/Risk)</label>
+    <div class="input-group full-width">
+        <label>USDT (Risk Amount)</label>
         <input type="number" id="usdt" placeholder="0.00" oninput="calculate()">
     </div>
 
-    <div class="input-group">
-        <label>Entry (ราคาเข้า)</label>
-        <input type="number" id="entry" placeholder="0.00" oninput="calculate()">
+    <div class="input-grid">
+        <div class="input-group">
+            <label>Entry Price</label>
+            <input type="number" id="entry" placeholder="0.00" oninput="calculate()">
+        </div>
+        <div class="input-group">
+            <label>Stop Loss (SL)</label>
+            <input type="number" id="sl" placeholder="0.00" oninput="calculate()">
+        </div>
     </div>
 
-    <div class="input-group">
-        <label>SL (Stop Loss)</label>
-        <input type="number" id="sl" placeholder="0.00" oninput="calculate()">
+    <div class="input-group full-width">
+        <label>Take Profit (TP) - <small>Optional</small></label>
+        <input type="number" id="tp" placeholder="ใส่เพื่อคำนวณ RR" oninput="calculate()">
     </div>
 
-    <div class="result-box">
-        <div class="result-label">ผลลัพธ์ (Position Size)</div>
-        <div id="result">0.00</div>
+    <div class="result-container">
+        <div class="result-box highlight-green">
+            <div class="result-label">Position Size</div>
+            <div id="pos-size" class="result-value">0.00</div>
+        </div>
+        <div class="result-box highlight-blue">
+            <div class="result-label">R:R Ratio</div>
+            <div id="rr-ratio" class="result-value">0.00 : 1</div>
+        </div>
     </div>
 </div>
 
@@ -86,33 +107,41 @@
         const usdt = parseFloat(document.getElementById('usdt').value);
         const entry = parseFloat(document.getElementById('entry').value);
         const sl = parseFloat(document.getElementById('sl').value);
-        const display = document.getElementById('result');
+        const tp = parseFloat(document.getElementById('tp').value);
 
-        // ตรวจสอบความถูกต้องของข้อมูล
-        if (!usdt || !entry || !sl) {
-            display.innerText = "0.00";
-            return;
+        const posDisplay = document.getElementById('pos-size');
+        const rrDisplay = document.getElementById('rr-ratio');
+
+        // 1. คำนวณ Position Size (สูตรเดิมของคุณ)
+        if (usdt && entry && sl && sl !== 0) {
+            const denominator = 1 - (entry / sl);
+            if (denominator !== 0) {
+                const total = usdt / denominator;
+                posDisplay.innerText = Math.abs(total).toLocaleString(undefined, {
+                    minimumFractionDigits: 2, 
+                    maximumFractionDigits: 2
+                });
+            } else {
+                posDisplay.innerText = "Error";
+            }
+        } else {
+            posDisplay.innerText = "0.00";
         }
 
-        // สูตรใหม่: USDT / (1 - (Entry / SL))
-        try {
-            const innerBracket = sl / entry;
-            const denominator = 1 - innerBracket;
-
-            if (denominator === 0) {
-                display.innerText = "หารด้วย 0";
-                return;
+        // 2. คำนวณ R:R Ratio (ถ้ามีการกรอก TP)
+        // สูตร RR = ระยะกำไร (TP-Entry) / ระยะขาดทุน (Entry-SL)
+        if (entry && sl && tp) {
+            const profitDist = Math.abs(tp - entry);
+            const lossDist = Math.abs(entry - sl);
+            
+            if (lossDist !== 0) {
+                const rr = profitDist / lossDist;
+                rrDisplay.innerText = rr.toFixed(2) + " : 1";
+            } else {
+                rrDisplay.innerText = "0.00 : 1";
             }
-
-            const total = usdt / denominator;
-
-            // แสดงผลลัพธ์
-            display.innerText = total.toLocaleString(undefined, {
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2
-            });
-        } catch (e) {
-            display.innerText = "Error";
+        } else {
+            rrDisplay.innerText = "0.00 : 1";
         }
     }
 </script>
