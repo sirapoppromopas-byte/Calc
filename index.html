@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Calculator - SL/Entry</title>
+    <title>Trading Calculator - Select Market</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
         
@@ -23,10 +23,50 @@
             border-radius: 20px;
             box-shadow: 0 20px 50px rgba(0,0,0,0.3);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             border: 1px solid #334155;
+            box-sizing: border-box;
         }
         h2 { text-align: center; color: #fbbf24; margin-bottom: 20px; font-weight: 500; }
+        
+        /* สไตล์หน้า Home เลือกโหมด */
+        .home-container {
+            text-align: center;
+        }
+        .home-container p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+        .mode-btn {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 15px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Kanit', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .mode-btn:hover {
+            border-color: #fbbf24;
+            background-color: #1e293b;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* สไตล์ฟอร์มเครื่องคิดเลข */
+        .calculator-view {
+            display: none;
+        }
         .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .full-width { grid-column: span 2; }
         .input-group { margin-bottom: 15px; }
@@ -62,149 +102,263 @@
         .highlight-yellow { border-color: #fbbf24; }
         .highlight-blue { border-color: #38bdf8; }
         .highlight-red { border-color: #ef4444; }
-        .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 5px; }
-        .result-value { font-size: 1.2rem; font-weight: bold; }
+        .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 3px; }
+        .result-value { font-size: 1.1rem; font-weight: bold; }
 
-        /* สไตล์ปุ่ม Clear */
-        .clear-btn {
-            width: 100%;
+        .btn-group {
+            display: flex;
+            gap: 10px;
             margin-top: 20px;
+        }
+        .action-btn {
+            flex: 1;
             padding: 12px;
-            background-color: transparent;
-            color: #94a3b8;
-            border: 1px solid #334155;
             border-radius: 10px;
             cursor: pointer;
             font-family: 'Kanit', sans-serif;
             font-size: 14px;
             transition: all 0.3s;
         }
+        .back-btn {
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+        }
+        .back-btn:hover {
+            background-color: #334155;
+            color: white;
+        }
+        .clear-btn {
+            background-color: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+        }
         .clear-btn:hover {
             background-color: #ef4444;
             color: white;
-            border-color: #ef4444;
         }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2>Trading Calc</h2>
-    
-    <div class="input-group full-width">
-        <label>USDT (Risk Amount)</label>
-        <label>(จำนวนขาดทุนUSDTที่รับได้)</label>
-        <input type="number" id="usdt" placeholder="0.00" oninput="calculate()">
+    <!-- หน้า Home สำหรับเลือกโหมด -->
+    <div id="home-view" class="home-container">
+        <h2>Trading Calculator</h2>
+        <p>เลือกตลาด</p>
+        <button class="mode-btn" onclick="selectMode('crypto')">
+            Crypto Calculator
+        </button>
+        <button class="mode-btn" onclick="selectMode('stock')">
+            Stock Calculator
+        </button>
     </div>
 
-    <div class="input-grid">
-        <div class="input-group">
-            <label>Entry Price (ราคาเข้าซื้อ)</label>
-            <input type="number" id="entry" placeholder="0.00" oninput="calculate()">
-        </div>
-        <div class="input-group">
-            <label>Stop Loss (SL)</label>
-            <input type="number" id="sl" placeholder="0.00" oninput="calculate()">
-        </div>
-    </div>
-
-    <div class="input-group full-width">
-        <label>Take Profit (TP) - Optional</label>
-        <input type="number" id="tp" placeholder="0.00" oninput="calculate()">
-    </div>
-
-    <div class="result-container">
-        <div class="result-box highlight-green">
-            <div class="result-label">Position Size</div>
-            <div class="result-label">(จำนวนเงินต้น (USDT))</div>
-            <div id="pos-size" class="result-value">0.00</div>
-        </div>
-        <div class="result-box highlight-yellow">
-            <div class="result-label">RR Ratio</div>
-            <div id="rr-ratio" class="result-value">0.00 : 1</div>
-        </div>
+    <!-- หน้าเครื่องคิดเลข -->
+    <div id="calculator-view" class="calculator-view">
+        <h2 id="calc-title">Trading Calc</h2>
         
-        <!-- เพิ่มส่วนแสดงผล % TP และ SL -->
-        <div class="result-box highlight-green">
-            <div class="result-label">TP Percentage</div>
-            <div class="result-label">(กำไร %)</div>
-            <div id="tp-percent" class="result-value" style="color: #22c55e;">0.00%</div>
-        </div>
-        <div class="result-box highlight-red">
-            <div class="result-label">SL Percentage</div>
-            <div class="result-label">(ขาดทุน %)</div>
-            <div id="sl-percent" class="result-value" style="color: #ef4444;">0.00%</div>
+        <div class="input-group full-width">
+            <label id="risk-label">Risk Amount (จำนวนเงินเสี่ยงที่รับได้)</label>
+            <input type="number" id="usdt" placeholder="0.00" oninput="calculate()">
         </div>
 
-        <div class="result-box highlight-blue full-width">
-            <div class="result-label">Estimated Profit (USDT)</div>
-            <div class="result-label">กำไร (USDT)</div>
-            <div id="profit" class="result-value" style="color: #38bdf8;">0.00</div>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Entry Price (ราคาเข้าซื้อ)</label>
+                <input type="number" id="entry" placeholder="0.00" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>Stop Loss (SL)</label>
+                <input type="number" id="sl" placeholder="0.00" oninput="calculate()">
+            </div>
+        </div>
+
+        <div class="input-group full-width">
+            <label>Take Profit (TP) - Optional</label>
+            <input type="number" id="tp" placeholder="0.00" oninput="calculate()">
+        </div>
+
+        <div class="result-container" id="result-grid">
+            <!-- ผลลัพธ์จะถูกปรับเปลี่ยนตามโหมดการใช้งาน -->
+        </div>
+
+        <div class="btn-group">
+            <button class="action-btn back-btn" onclick="goHome()">Back</button>
+            <button class="action-btn clear-btn" onclick="clearAll()">Clear All</button>
         </div>
     </div>
-
-    <button class="clear-btn" onclick="clearAll()">Clear All</button>
 </div>
 
 <script>
+    let currentMode = 'crypto';
+
+    function selectMode(mode) {
+        currentMode = mode;
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('calculator-view').style.display = 'block';
+
+        const calcTitle = document.getElementById('calc-title');
+        const riskLabel = document.getElementById('risk-label');
+        const resultGrid = document.getElementById('result-grid');
+
+        if (mode === 'crypto') {
+            calcTitle.innerText = "Crypto Calculator";
+            riskLabel.innerText = "USDT (จำนวนขาดทุนที่รับได้)";
+            
+            // Layout สำหรับ Crypto
+            resultGrid.innerHTML = `
+                <div class="result-box highlight-green">
+                    <div class="result-label">Position Size</div>
+                    <div class="result-label">(จำนวนเงินรวม USDT)</div>
+                    <div id="pos-size" class="result-value">0.00</div>
+                </div>
+                <div class="result-box highlight-yellow">
+                    <div class="result-label">RR Ratio</div>
+                    <div style="height: 15px;"></div>
+                    <div id="rr-ratio" class="result-value">0.00 : 1</div>
+                </div>
+                <div class="result-box highlight-green">
+                    <div class="result-label">TP Percentage</div>
+                    <div class="result-label">(กำไร %)</div>
+                    <div id="tp-percent" class="result-value" style="color: #22c55e;">0.00%</div>
+                </div>
+                <div class="result-box highlight-red">
+                    <div class="result-label">SL Percentage</div>
+                    <div class="result-label">(ขาดทุน %)</div>
+                    <div id="sl-percent" class="result-value" style="color: #ef4444;">0.00%</div>
+                </div>
+                <div class="result-box highlight-blue full-width">
+                    <div class="result-label">Estimated Profit (USDT)</div>
+                    <div id="profit" class="result-value" style="color: #38bdf8;">0.00</div>
+                </div>
+            `;
+        } else {
+            calcTitle.innerText = "Stock Calculator";
+            riskLabel.innerText = "Risk Amount (จำนวนเงินขาดทุนที่รับได้)";
+            
+            // Layout สำหรับ Stock (แสดงทั้งจำนวนหุ้น และจำนวนเงินลงทุน)
+            resultGrid.innerHTML = `
+                <div class="result-box highlight-green">
+                    <div class="result-label">Number of Shares</div>
+                    <div class="result-label">(จำนวนหุ้น / Lot)</div>
+                    <div id="shares" class="result-value">0.00</div>
+                </div>
+                <div class="result-box highlight-green">
+                    <div class="result-label">Total Investment</div>
+                    <div class="result-label">(จำนวนเงินลงทุนรวม)</div>
+                    <div id="total-investment" class="result-value">0.00</div>
+                </div>
+                <div class="result-box highlight-yellow">
+                    <div class="result-label">RR Ratio</div>
+                    <div style="height: 15px;"></div>
+                    <div id="rr-ratio" class="result-value">0.00 : 1</div>
+                </div>
+                <div class="result-box highlight-green">
+                    <div class="result-label">TP Percentage</div>
+                    <div class="result-label">(กำไร %)</div>
+                    <div id="tp-percent" class="result-value" style="color: #22c55e;">0.00%</div>
+                </div>
+                <div class="result-box highlight-red">
+                    <div class="result-label">SL Percentage</div>
+                    <div class="result-label">(ขาดทุน %)</div>
+                    <div id="sl-percent" class="result-value" style="color: #ef4444;">0.00%</div>
+                </div>
+                <div class="result-box highlight-blue">
+                    <div class="result-label">Estimated Profit</div>
+                    <div class="result-label">(กำไรที่คาดว่าจะได้)</div>
+                    <div id="profit" class="result-value" style="color: #38bdf8;">0.00</div>
+                </div>
+            `;
+        }
+        clearAll();
+    }
+
+    function goHome() {
+        document.getElementById('calculator-view').style.display = 'none';
+        document.getElementById('home-view').style.display = 'block';
+    }
+
     function calculate() {
-        const usdt = parseFloat(document.getElementById('usdt').value);
+        const risk = parseFloat(document.getElementById('usdt').value);
         const entry = parseFloat(document.getElementById('entry').value);
         const sl = parseFloat(document.getElementById('sl').value);
         const tp = parseFloat(document.getElementById('tp').value);
 
-        const posDisplay = document.getElementById('pos-size');
         const rrDisplay = document.getElementById('rr-ratio');
         const profitDisplay = document.getElementById('profit');
         const tpPercentDisplay = document.getElementById('tp-percent');
         const slPercentDisplay = document.getElementById('sl-percent');
 
-        // คำนวณ Position Size
-        if (usdt && entry && sl && entry !== sl) {
+        // คำนวณจำนวนหน่วย (หุ้น / เหรียญ)
+        if (risk && entry && sl && entry !== sl) {
             const riskPerUnit = Math.abs(entry - sl);
-            const totalUnits = usdt / riskPerUnit;
-            const totalValue = totalUnits * entry;
-            
-            posDisplay.innerText = totalValue.toLocaleString(undefined, {
-                minimumFractionDigits: 2, 
-                maximumFractionDigits: 2
-            });
+            const totalUnits = risk / riskPerUnit;
+
+            if (currentMode === 'crypto') {
+                const totalValue = totalUnits * entry;
+                const posDisplay = document.getElementById('pos-size');
+                if (posDisplay) {
+                    posDisplay.innerText = totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+            } else {
+                const sharesDisplay = document.getElementById('shares');
+                const investmentDisplay = document.getElementById('total-investment');
+                const totalValue = totalUnits * entry;
+
+                if (sharesDisplay) {
+                    sharesDisplay.innerText = totalUnits.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+                if (investmentDisplay) {
+                    investmentDisplay.innerText = totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
+            }
         } else {
-            posDisplay.innerText = "0.00";
+            if (currentMode === 'crypto') {
+                const posDisplay = document.getElementById('pos-size');
+                if (posDisplay) posDisplay.innerText = "0.00";
+            } else {
+                const sharesDisplay = document.getElementById('shares');
+                const investmentDisplay = document.getElementById('total-investment');
+                if (sharesDisplay) sharesDisplay.innerText = "0.00";
+                if (investmentDisplay) investmentDisplay.innerText = "0.00";
+            }
         }
 
         // คำนวณ SL Percentage
-        if (entry && sl && entry !== 0) {
+        if (entry && sl && entry !== 0 && slPercentDisplay) {
             const slPercent = Math.abs((sl - entry) / entry) * 100;
             slPercentDisplay.innerText = slPercent.toFixed(2) + "%";
-        } else {
+        } else if (slPercentDisplay) {
             slPercentDisplay.innerText = "0.00%";
         }
 
         // คำนวณ TP Percentage, RR Ratio และ Profit
         if (entry && sl && tp && entry !== sl) {
-            const risk = Math.abs(entry - sl);
-            const reward = Math.abs(tp - entry);
-            const rr = reward / risk;
+            const riskUnit = Math.abs(entry - sl);
+            const rewardUnit = Math.abs(tp - entry);
+            const rr = rewardUnit / riskUnit;
             
-            rrDisplay.innerText = rr.toFixed(2) + " : 1";
+            if (rrDisplay) rrDisplay.innerText = rr.toFixed(2) + " : 1";
 
-            const tpPercent = Math.abs((tp - entry) / entry) * 100;
-            tpPercentDisplay.innerText = tpPercent.toFixed(2) + "%";
+            if (tpPercentDisplay) {
+                const tpPercent = Math.abs((tp - entry) / entry) * 100;
+                tpPercentDisplay.innerText = tpPercent.toFixed(2) + "%";
+            }
 
-            if (usdt) {
-                const estimatedProfit = rr * usdt;
+            if (risk && profitDisplay) {
+                const estimatedProfit = rr * risk;
                 profitDisplay.innerText = "+" + estimatedProfit.toLocaleString(undefined, {
                     minimumFractionDigits: 2, 
                     maximumFractionDigits: 2
                 });
-            } else {
+            } else if (profitDisplay) {
                 profitDisplay.innerText = "0.00";
             }
         } else {
-            rrDisplay.innerText = "0.00 : 1";
-            if (!tp) tpPercentDisplay.innerText = "0.00%";
-            profitDisplay.innerText = "0.00";
+            if (rrDisplay) rrDisplay.innerText = "0.00 : 1";
+            if (tpPercentDisplay && !tp) tpPercentDisplay.innerText = "0.00%";
+            if (profitDisplay) profitDisplay.innerText = "0.00";
         }
     }
 
@@ -215,11 +369,22 @@
         document.getElementById('sl').value = '';
         document.getElementById('tp').value = '';
         
-        document.getElementById('pos-size').innerText = "0.00";
-        document.getElementById('rr-ratio').innerText = "0.00 : 1";
-        document.getElementById('tp-percent').innerText = "0.00%";
-        document.getElementById('sl-percent').innerText = "0.00%";
-        document.getElementById('profit').innerText = "0.00";
+        const posSize = document.getElementById('pos-size');
+        const shares = document.getElementById('shares');
+        const investment = document.getElementById('total-investment');
+        const rrRatio = document.getElementById('rr-ratio');
+        const tpPercent = document.getElementById('tp-percent');
+        const slPercent = document.getElementById('sl-percent');
+        const profit = document.getElementById('profit');
+
+        if (posSize) posSize.innerText = "0.00";
+        if (shares) shares.innerText = "0.00";
+        if (investment) investment.innerText = "0.00";
+        if (rrRatio) rrRatio.innerText = "0.00 : 1";
+        if (tpPercent) tpPercent.innerText = "0.00%_"; // ปรับแก้
+        if (tpPercent) tpPercent.innerText = "0.00%";
+        if (slPercent) slPercent.innerText = "0.00%";
+        if (profit) profit.innerText = "0.00";
     }
 </script>
 
