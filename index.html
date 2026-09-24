@@ -61,6 +61,7 @@
         .highlight-green { border-color: #22c55e; }
         .highlight-yellow { border-color: #fbbf24; }
         .highlight-blue { border-color: #38bdf8; }
+        .highlight-red { border-color: #ef4444; }
         .result-label { color: #94a3b8; font-size: 0.75rem; margin-bottom: 5px; }
         .result-value { font-size: 1.2rem; font-weight: bold; }
 
@@ -88,7 +89,7 @@
 <body>
 
 <div class="card">
-    <h2>Trading Calc </h2>
+    <h2>Trading Calc</h2>
     
     <div class="input-group full-width">
         <label>USDT (Risk Amount)</label>
@@ -122,6 +123,19 @@
             <div class="result-label">RR Ratio</div>
             <div id="rr-ratio" class="result-value">0.00 : 1</div>
         </div>
+        
+        <!-- เพิ่มส่วนแสดงผล % TP และ SL -->
+        <div class="result-box highlight-green">
+            <div class="result-label">TP Percentage</div>
+            <div class="result-label">(กำไร %)</div>
+            <div id="tp-percent" class="result-value" style="color: #22c55e;">0.00%</div>
+        </div>
+        <div class="result-box highlight-red">
+            <div class="result-label">SL Percentage</div>
+            <div class="result-label">(ขาดทุน %)</div>
+            <div id="sl-percent" class="result-value" style="color: #ef4444;">0.00%</div>
+        </div>
+
         <div class="result-box highlight-blue full-width">
             <div class="result-label">Estimated Profit (USDT)</div>
             <div class="result-label">กำไร (USDT)</div>
@@ -142,6 +156,8 @@
         const posDisplay = document.getElementById('pos-size');
         const rrDisplay = document.getElementById('rr-ratio');
         const profitDisplay = document.getElementById('profit');
+        const tpPercentDisplay = document.getElementById('tp-percent');
+        const slPercentDisplay = document.getElementById('sl-percent');
 
         // คำนวณ Position Size
         if (usdt && entry && sl && entry !== sl) {
@@ -157,13 +173,24 @@
             posDisplay.innerText = "0.00";
         }
 
-        // คำนวณ RR Ratio และ Profit
+        // คำนวณ SL Percentage
+        if (entry && sl && entry !== 0) {
+            const slPercent = Math.abs((sl - entry) / entry) * 100;
+            slPercentDisplay.innerText = slPercent.toFixed(2) + "%";
+        } else {
+            slPercentDisplay.innerText = "0.00%";
+        }
+
+        // คำนวณ TP Percentage, RR Ratio และ Profit
         if (entry && sl && tp && entry !== sl) {
             const risk = Math.abs(entry - sl);
             const reward = Math.abs(tp - entry);
             const rr = reward / risk;
             
             rrDisplay.innerText = rr.toFixed(2) + " : 1";
+
+            const tpPercent = Math.abs((tp - entry) / entry) * 100;
+            tpPercentDisplay.innerText = tpPercent.toFixed(2) + "%";
 
             if (usdt) {
                 const estimatedProfit = rr * usdt;
@@ -176,21 +203,22 @@
             }
         } else {
             rrDisplay.innerText = "0.00 : 1";
+            if (!tp) tpPercentDisplay.innerText = "0.00%";
             profitDisplay.innerText = "0.00";
         }
     }
 
     // ฟังก์ชันล้างค่า
     function clearAll() {
-        // ล้างค่าใน input
         document.getElementById('usdt').value = '';
         document.getElementById('entry').value = '';
         document.getElementById('sl').value = '';
         document.getElementById('tp').value = '';
         
-        // รีเซ็ตการแสดงผล
         document.getElementById('pos-size').innerText = "0.00";
         document.getElementById('rr-ratio').innerText = "0.00 : 1";
+        document.getElementById('tp-percent').innerText = "0.00%";
+        document.getElementById('sl-percent').innerText = "0.00%";
         document.getElementById('profit').innerText = "0.00";
     }
 </script>
